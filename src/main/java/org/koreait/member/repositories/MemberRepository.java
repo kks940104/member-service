@@ -12,7 +12,7 @@ public interface MemberRepository extends JpaRepository<Member, Long>, QuerydslP
 
 
     @EntityGraph("authorities")
-    Optional<Member> findByEmage(String email);
+    Optional<Member> findByEmail(String email);
 
     default boolean exists(String email) {
         QMember member = QMember.member;

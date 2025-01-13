@@ -33,7 +33,7 @@ public class MemberInfoService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Member member = memberRepository.findByEmage(username).orElseThrow(() -> new UsernameNotFoundException(username));
+        Member member = memberRepository.findByEmail(username).orElseThrow(() -> new UsernameNotFoundException(username));
 
         List<Authorities> items = member.getAuthorities();
         if (items == null) {
