@@ -1,8 +1,10 @@
 package org.koreait.global.configs;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.koreait.global.exceptions.UnAuthorizedException;
 import org.koreait.member.jwt.filters.LoginFilter;
+import org.springframework.boot.autoconfigure.session.DefaultCookieSerializerCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -42,15 +44,20 @@ public class SecurityConfig {
                 .addFilterBefore(loginFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(c -> { // 인증 실패 시 예외처리..
                     c.authenticationEntryPoint((req, res, e) -> {
-                        throw new UnAuthorizedException();
+                        res.sendError(HttpServletResponse.SC_UNAUTHORIZED);
                     }); // 미 로그인한 상태에서 접근한 경우
                     c.accessDeniedHandler((req, res, e) -> {
-                        throw new UnAuthorizedException();
+                        res.sendError(HttpServletResponse.SC_UNAUTHORIZED);
                     }); // 로그인 후 권한이 없는 경우
                 })
                 .authorizeHttpRequests(c ->  // 권한 및 인증..
-                    c.requestMatchers("/member/join", "/member/login").permitAll()
-                            .requestMatchers("/admin/member/**").hasAnyAuthority("ADMIN")
+                    c.requestMatchers(
+                            "/join", // api/v1/member/join .....이기에
+                                    "/login",
+                                    "/apidocs.html",
+                                    "/swagger-ui*/**",
+                                    "/api-docs/**").permitAll()
+                            .requestMatchers("/admin/**").hasAnyAuthority("ADMIN")
                             .anyRequest().authenticated()
                 );
 
@@ -62,3 +69,20 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
