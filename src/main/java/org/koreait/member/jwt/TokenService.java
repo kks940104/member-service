@@ -1,27 +1,25 @@
 package org.koreait.member.jwt;
 
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import lombok.RequiredArgsConstructor;
+import io.jsonwebtoken.security.SecurityException;
+import io.jsonwebtoken.security.UnsupportedKeyException;
+import org.koreait.global.libs.Utils;
 import org.koreait.member.MemberInfo;
-import org.koreait.member.constants.Authority;
-import org.koreait.member.services.MemberInfoService;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 import org.springframework.stereotype.Service;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.annotation.Lazy;
+import org.koreait.member.services.MemberInfoService;
 import org.springframework.security.core.Authentication;
 import org.koreait.global.exceptions.UnAuthorizedException;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
 import java.security.Key;
 import java.util.Arrays;
@@ -36,6 +34,9 @@ public class TokenService {
 
     private final JwtProperties properties;
     private final MemberInfoService infoService;
+
+    @Autowired
+    private Utils utils;
 
     private Key key;
 
@@ -77,6 +78,10 @@ public class TokenService {
      * @return
      */
     public Authentication authentication(String token) {
+
+        // 토큰 유효성 검사
+        validate(token);
+
         Claims claims = Jwts.parser()
                 .setSigningKey(key)
                 .build().parseClaimsJws(token)
@@ -105,6 +110,37 @@ public class TokenService {
         String token = authHeader.substring(7);
 
         return authentication(token);
+    }
+
+    /**
+     * 토큰 검증
+     *
+     * @param token
+     */
+    public void validate(String token) {
+        String errorCode = null;
+        Exception error = null;
+        try {
+            Jwts.parser().setSigningKey(key).build().parseClaimsJws(token).getPayload();
+        } catch (SecurityException | MalformedJwtException e) {
+            errorCode = "JWT.malformed";
+            error = e;
+        } catch (ExpiredJwtException e) { // 토큰 만료
+            errorCode = "JWT.expired";
+            error = e;
+        } catch (UnsupportedJwtException e) {
+            errorCode = "JWT.unsupported";
+            error = e;
+        } catch (Exception e) {
+            errorCode = "JWT.error";
+            error = e;
+        }
+        if (StringUtils.hasText(errorCode)) {
+            throw new UnAuthorizedException(utils.getMessage(errorCode));
+        }
+        if (error != null) {
+            error.printStackTrace();
+        }
     }
 }
 
