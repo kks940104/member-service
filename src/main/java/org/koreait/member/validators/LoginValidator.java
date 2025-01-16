@@ -40,13 +40,15 @@ public class LoginValidator implements Validator {
         String email = form.getEmail();
         String password = form.getPassword();
         Member member = memberRepository.findByEmail(email).orElse(null);
-        if (member == null || !passwordEncoder.matches(member.getPassword(), password)) {
+        System.out.println("form : " + form);
+        System.out.println("member : " + member);
+        if (member == null) {
             errors.reject("Mismatch.login");
         }
-
-/*        if (!passwordEncoder.matches(member.getPassword(), password)) {
+        //  비밀번호가 일치하지 않는 경우
+        if (!passwordEncoder.matches(password, member.getPassword())) {
             errors.reject("Mismatch.login");
-        }*/
+        }
     }
 }
 

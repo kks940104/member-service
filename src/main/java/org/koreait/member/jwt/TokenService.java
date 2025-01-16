@@ -27,7 +27,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Lazy
 @Service
 @EnableConfigurationProperties(JwtProperties.class)
 public class TokenService {
